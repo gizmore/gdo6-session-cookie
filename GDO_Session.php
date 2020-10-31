@@ -129,6 +129,7 @@ class GDO_Session
 	{
 		if ($session = self::instance())
 		{
+		    $session->cookieChanged = true;
 		    unset($session->cookieData[$key]);
 		}
 	}
