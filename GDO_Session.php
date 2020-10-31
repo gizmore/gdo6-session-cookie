@@ -33,10 +33,14 @@ class GDO_Session
 	public function getToken() { return $this->getVar('sess_token'); }
 	public function getUser()
 	{
-	    $uid = $this->getVar('sess_user');
-	    return $uid ?
-	    GDO_User::findById($uid) :
-	    null;
+	    if ($uid = $this->getVar('sess_user'))
+	    {
+	        if ($user = GDO_User::table()->find($uid, false))
+	        {
+	            return $user;
+	        }
+	        $this->setDummyCookie(); # somethings wrong in db!
+	    }
 	}
 	public function getIP() { return $this->getVar('sess_ip'); }
 	public function getTime() { return $this->getVar('sess_time'); }
