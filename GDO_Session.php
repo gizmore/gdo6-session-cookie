@@ -6,6 +6,7 @@ use GDO\User\GDO_User;
 use GDO\Util\Math;
 use GDO\Date\Time;
 use GDO\Util\AES;
+use GDO\Core\Logger;
 
 /**
  * AES-Cookie driven Session handler.
@@ -29,8 +30,12 @@ class GDO_Session
 	private static $COOKIE_HTTPS = true;
 	private static $COOKIE_SECONDS = 72600;
 	
-	public function getID() { return $this->getVar('sess_id'); }
-	public function getToken() { return $this->getVar('sess_token'); }
+	public function getID()
+	{
+	    return $this->getVar('sess_id');
+	}
+	
+// 	public function getToken() { return $this->getVar('sess_token'); }
 	public function getUser()
 	{
 	    if ($uid = $this->getVar('sess_user'))
@@ -194,6 +199,7 @@ class GDO_Session
 	    if ($decrypted = AES::decryptIV($cookieValue, GWF_SALT))
 	    {
 	        $sess = new self();
+// 	        Logger::logDebug($decrypted);
 	        if ($sess->cookieData = json_decode(rtrim($decrypted, "\x00"), true))
 	        {
 	            self::$INSTANCE = $sess;
@@ -215,6 +221,7 @@ class GDO_Session
 		{
 		    if ($this->cookieChanged)
 		    {
+// 		        Logger::logDebug(json_encode($this->cookieData));
     		    setcookie(self::$COOKIE_NAME, $this->cookieContent(), Application::$TIME + self::$COOKIE_SECONDS, '/', self::$COOKIE_DOMAIN, self::cookieSecure(), !self::$COOKIE_JS);
 		    }
 		}
@@ -242,6 +249,7 @@ class GDO_Session
 	{
 	    $session = new self();
         $session->cookieData['sess_time'] = Time::getDate();
+        $session->cookieData['sess_id'] = (int)(Application::$MICROTIME * 1000000);
 		$session->setCookie();
 		return $session;
 	}
