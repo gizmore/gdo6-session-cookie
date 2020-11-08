@@ -6,7 +6,6 @@ use GDO\User\GDO_User;
 use GDO\Util\Math;
 use GDO\Date\Time;
 use GDO\Util\AES;
-use GDO\Core\Logger;
 
 /**
  * AES-Cookie driven Session handler.
@@ -217,7 +216,7 @@ class GDO_Session
 	
 	private function setCookie()
 	{
-		if (!Application::instance()->isCLI())
+		if ( (!Application::instance()->isCLI()) && (!Application::instance()->isInstall()) )
 		{
 		    if ($this->cookieChanged)
 		    {
