@@ -6,6 +6,7 @@ use GDO\User\GDO_User;
 use GDO\Util\Math;
 use GDO\Date\Time;
 use GDO\Util\AES;
+use GDO\Core\Website;
 
 /**
  * AES-Cookie driven Session handler.
@@ -221,7 +222,11 @@ class GDO_Session
 		    if ($this->cookieChanged)
 		    {
 // 		        Logger::logDebug(json_encode($this->cookieData));
-    		    setcookie(self::$COOKIE_NAME, $this->cookieContent(), Application::$TIME + self::$COOKIE_SECONDS, '/', self::$COOKIE_DOMAIN, self::cookieSecure(), !self::$COOKIE_JS);
+    		    if (!setcookie(self::$COOKIE_NAME, $this->cookieContent(), Application::$TIME + self::$COOKIE_SECONDS, '/', self::$COOKIE_DOMAIN, self::cookieSecure(), !self::$COOKIE_JS))
+    		    {
+    		        Website::error('err_set_cookie');
+    		        die('ERR');
+    		    }
 		    }
 		}
 	}
