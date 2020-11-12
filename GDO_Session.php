@@ -203,7 +203,7 @@ class GDO_Session
 	        if ($sess->cookieData = json_decode(rtrim($decrypted, "\x00"), true))
 	        {
 	            self::$INSTANCE = $sess;
-        		GDO_User::$CURRENT = $sess->getUser();
+//         		GDO_User::$CURRENT = $sess->getUser();
         		return $sess;
 	        }
 	    }
