@@ -7,6 +7,7 @@ use GDO\Util\Math;
 use GDO\Date\Time;
 use GDO\Util\AES;
 use GDO\Core\Website;
+use GDO\Net\GDT_IP;
 
 /**
  * AES-Cookie driven Session handler.
@@ -183,6 +184,11 @@ class GDO_Session
 		# Try to reload
 		elseif ($session = self::reloadCookie($cookieValue, $cookieIP))
 		{
+		    if (!$session->ipCheck())
+		    {
+		        self::setDummyCookie();
+		        return false;
+		    }
 		}
 		# Set special first dummy cookie
 		else
@@ -210,8 +216,12 @@ class GDO_Session
 	    return false;
 	}
 	
-	public function ipCheck($cookieIP=true)
+	public function ipCheck()
 	{
+	    if ($ip = $this->getIP())
+	    {
+	        return $ip === GDT_IP::current();
+	    }
 		return true;
 	}
 	
