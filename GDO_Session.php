@@ -212,6 +212,10 @@ class GDO_Session
 //         		GDO_User::$CURRENT = $sess->getUser();
         		return $sess;
 	        }
+	        else
+	        {
+	            self::setDummyCookie();
+	        }
 	    }
 	    return false;
 	}
