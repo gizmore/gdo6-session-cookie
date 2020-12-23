@@ -22,7 +22,7 @@ class GDO_Session
 {
 	const DUMMY_COOKIE_CONTENT = 'GDO_like_16_byte';
 	
-	private static $INSTANCE;
+	public static $INSTANCE;
 	public static $STARTED = false;
 	
 	private static $COOKIE_NAME = 'GDO6';
