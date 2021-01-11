@@ -31,6 +31,8 @@ class GDO_Session
 	private static $COOKIE_HTTPS = true;
 	private static $COOKIE_SECONDS = 72600;
 	
+	public static function isDB() { return false; }
+	
 	public function getID()
 	{
 	    return $this->getVar('sess_id');
