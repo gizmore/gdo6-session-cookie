@@ -4,11 +4,9 @@ namespace GDO\Session;
 use GDO\Core\Application;
 use GDO\User\GDO_User;
 use GDO\Util\Math;
-use GDO\Date\Time;
 use GDO\Util\AES;
 use GDO\Core\Website;
 use GDO\Net\GDT_IP;
-use GDO\Core\Logger;
 
 /**
  * AES-Cookie driven Session handler.
@@ -202,7 +200,8 @@ class GDO_Session
         # Try to reload
         elseif ($session = self::reloadCookie($cookieValue, $cookieIP))
         {
-            if (!$session->ipCheck())
+            if ( (!$session->ipCheck()) ||
+                 (!$session->timeCheck()) )
             {
                 self::setDummyCookie();
                 return false;
@@ -249,13 +248,25 @@ class GDO_Session
         return true;
     }
     
+    public function timeCheck()
+    {
+        if ($time = $this->getTime())
+        {
+            if ( ($time + GWF_SESS_TIME) < Application::$TIME)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+    
     private function setCookie()
     {
         if ( (!Application::instance()->isCLI()) && (!Application::instance()->isInstall()) )
         {
             if ($this->cookieChanged)
             {
-                // 		        Logger::logDebug(json_encode($this->cookieData));
+// 		        Logger::logDebug(json_encode($this->cookieData));
                 if (!setcookie(self::$COOKIE_NAME, $this->cookieContent(), Application::$TIME + self::$COOKIE_SECONDS, '/', self::$COOKIE_DOMAIN, self::cookieSecure(), !self::$COOKIE_JS))
                 {
                     Website::error('err_set_cookie');
@@ -267,8 +278,13 @@ class GDO_Session
     
     public function cookieContent()
     {
+        if (!$this->cookieData)
+        {
+            $this->cookieData = [];
+        }
+        $this->cookieData['sess_time'] = Application::$TIME;
         $json = json_encode($this->cookieData);
-        Logger::logDebug($json);
+//         Logger::logDebug($json);
         $encoded = zlib_encode($json, ZLIB_ENCODING_GZIP, 9);
         $encrypted = AES::encryptIV($encoded, GWF_SALT);
         return $encrypted;
@@ -291,8 +307,7 @@ class GDO_Session
     private static function createSession()
     {
         $session = new self();
-        $session->cookieData['sess_time'] = Time::getDate();
-        $session->cookieData['sess_id'] = (int)(Application::$MICROTIME * 1000000);
+//         $session->cookieData['sess_id'] = (int)(Application::$MICROTIME * 1000000);
         $session->setCookie();
         return $session;
     }
