@@ -221,10 +221,11 @@ class GDO_Session
     {
         if ($decrypted = AES::decryptIV($cookieValue, GWF_SALT))
         {
-            if ($decoded = zlib_decode($decrypted))
-            {
+//             if ($decoded = zlib_decode($decrypted))
+//             {
                 $sess = new self();
-                if ($sess->cookieData = json_decode(rtrim($decoded, "\x00"), true))
+//                 if ($sess->cookieData = json_decode(rtrim($decrypted, "\x00"), true))
+                if ($sess->cookieData = json_decode(rtrim($decrypted, "\x00"), true))
                 {
                     self::$INSTANCE = $sess;
                     //         		GDO_User::$CURRENT = $sess->getUser();
@@ -234,7 +235,7 @@ class GDO_Session
                 {
                     self::setDummyCookie();
                 }
-            }
+//             }
         }
         return false;
     }
@@ -285,8 +286,9 @@ class GDO_Session
         $this->cookieData['sess_time'] = Application::$TIME;
         $json = json_encode($this->cookieData);
 //         Logger::logDebug($json);
-        $encoded = zlib_encode($json, ZLIB_ENCODING_GZIP, 9);
-        $encrypted = AES::encryptIV($encoded, GWF_SALT);
+//         $encoded = zlib_encode($json, ZLIB_ENCODING_GZIP, 9);
+//         $encrypted = AES::encryptIV($encoded, GWF_SALT);
+        $encrypted = AES::encryptIV($json, GWF_SALT);
         return $encrypted;
     }
     
