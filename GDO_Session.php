@@ -7,6 +7,7 @@ use GDO\Util\Math;
 use GDO\Util\AES;
 use GDO\Core\Website;
 use GDO\Net\GDT_IP;
+use GDO\Util\Random;
 
 /**
  * AES-Cookie driven Session handler.
@@ -280,7 +281,9 @@ class GDO_Session
     {
         if (!$this->cookieData)
         {
-            $this->cookieData = [];
+            $this->cookieData = [
+                'sess_id' => Application::$MICROTIME . Random::mrand(1, 100),
+            ];
         }
         $this->cookieData['sess_time'] = Application::$TIME;
         $json = json_encode($this->cookieData);
@@ -307,7 +310,6 @@ class GDO_Session
     private static function createSession()
     {
         $session = new self();
-//         $session->cookieData['sess_id'] = (int)(Application::$MICROTIME * 1000000);
         $session->setCookie();
         return $session;
     }
