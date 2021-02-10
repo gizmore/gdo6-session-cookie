@@ -2,6 +2,7 @@
 namespace GDO\Session;
 
 use GDO\Core\Application;
+use GDO\Core\Logger;
 use GDO\User\GDO_User;
 use GDO\Util\Math;
 use GDO\Util\AES;
@@ -269,7 +270,13 @@ class GDO_Session
             if ($this->cookieChanged)
             {
 // 		        Logger::logDebug(json_encode($this->cookieData));
-                if (!setcookie(self::$COOKIE_NAME, $this->cookieContent(), Application::$TIME + self::$COOKIE_SECONDS, '/', self::$COOKIE_DOMAIN, self::cookieSecure(), !self::$COOKIE_JS))
+                if (!setcookie(self::$COOKIE_NAME,
+                    $this->cookieContent(),
+                    Application::$TIME + self::$COOKIE_SECONDS,
+                    '/',
+                    self::$COOKIE_DOMAIN,
+                    self::cookieSecure(),
+                    !self::$COOKIE_JS))
                 {
                     Website::error('err_set_cookie');
                     die('ERR');
@@ -288,7 +295,7 @@ class GDO_Session
         }
         $this->cookieData['sess_time'] = Application::$TIME;
         $json = json_encode($this->cookieData);
-//         Logger::logDebug($json);
+        Logger::logDebug($json);
 //         $encoded = zlib_encode($json, ZLIB_ENCODING_GZIP, 9);
 //         $encrypted = AES::encryptIV($encoded, GWF_SALT);
         $encrypted = AES::encryptIV($json, GWF_SALT);
