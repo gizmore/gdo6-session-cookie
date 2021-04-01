@@ -15,8 +15,8 @@ use GDO\Util\Random;
  * @TODO cleanup session code in other modules
  *
  * @author gizmore
- * @version 6.11
- * @since 3.00
+ * @version 6.10.1
+ * @since 6.10.0
  */
 class GDO_Session
 {
@@ -45,7 +45,6 @@ class GDO_Session
         return self::$INSTANCE;
     }
     
-    // 	public function getToken() { return $this->getVar('sess_token'); }
     public function getUser()
     {
         if ($uid = $this->getVar('sess_user'))
@@ -85,7 +84,7 @@ class GDO_Session
         return $this;
     }
     
-    public $cookieData = [];
+    private $cookieData = [];
     private $cookieChanged = false;
     
     /**
@@ -121,10 +120,10 @@ class GDO_Session
         self::$STARTED = false;
     }
     
-    public static function init($cookieName='GDO6', $domain='localhost', $seconds=-1, $httpOnly=true, $https = false)
+    public static function init($cookieName='GDO6', $domain=null, $seconds=-1, $httpOnly=true, $https=false)
     {
         self::$COOKIE_NAME = $cookieName;
-        self::$COOKIE_DOMAIN = $domain;
+        self::$COOKIE_DOMAIN = $domain ? $domain : $_SERVER['HTTP_HOST'];
         self::$COOKIE_SECONDS = Math::clamp($seconds, -1, 1234567);
         self::$COOKIE_JS = !$httpOnly;
         self::$COOKIE_HTTPS = $https;
@@ -156,8 +155,11 @@ class GDO_Session
     {
         if ($session = self::instance())
         {
-            $session->cookieChanged = true;
-            unset($session->cookieData[$key]);
+            if (isset($session->cookieData[$key]))
+            {
+                $session->cookieChanged = true;
+                unset($session->cookieData[$key]);
+            }
         }
     }
     
@@ -222,21 +224,16 @@ class GDO_Session
     {
         if ($decrypted = AES::decryptIV($cookieValue, GWF_SALT))
         {
-//             if ($decoded = zlib_decode($decrypted))
-//             {
-                $sess = new self();
-//                 if ($sess->cookieData = json_decode(rtrim($decrypted, "\x00"), true))
-                if ($sess->cookieData = json_decode(rtrim($decrypted, "\x00"), true))
-                {
-                    self::$INSTANCE = $sess;
-                    //         		GDO_User::$CURRENT = $sess->getUser();
-                    return $sess;
-                }
-                else
-                {
-                    self::setDummyCookie();
-                }
-//             }
+            $sess = new self();
+            if ($sess->cookieData = json_decode(rtrim($decrypted, "\x00"), true))
+            {
+                self::$INSTANCE = $sess;
+                return $sess;
+            }
+            else
+            {
+                self::setDummyCookie();
+            }
         }
         return false;
     }
@@ -264,22 +261,20 @@ class GDO_Session
     
     private function setCookie()
     {
-        if ( (!Application::instance()->isCLI()) && (!Application::instance()->isInstall()) )
+        if ( (!Application::instance()->isCLI()) &&
+             (!Application::instance()->isInstall()) &&
+             ($this->cookieChanged) )
         {
-            if ($this->cookieChanged)
+            if (!setcookie(self::$COOKIE_NAME,
+                $this->cookieContent(),
+                Application::$TIME + self::$COOKIE_SECONDS,
+                '/',
+                self::$COOKIE_DOMAIN,
+                self::cookieSecure(),
+                !self::$COOKIE_JS))
             {
-// 		        Logger::logDebug(json_encode($this->cookieData));
-                if (!setcookie(self::$COOKIE_NAME,
-                    $this->cookieContent(),
-                    Application::$TIME + self::$COOKIE_SECONDS,
-                    '/',
-                    self::$COOKIE_DOMAIN,
-                    self::cookieSecure(),
-                    !self::$COOKIE_JS))
-                {
-                    Website::error('err_set_cookie');
-                    die('ERR');
-                }
+                Website::error('err_set_cookie');
+                die('ERR');
             }
         }
     }
@@ -294,9 +289,6 @@ class GDO_Session
         }
         $this->cookieData['sess_time'] = Application::$TIME;
         $json = json_encode($this->cookieData);
-//         Logger::logDebug($json);
-//         $encoded = zlib_encode($json, ZLIB_ENCODING_GZIP, 9);
-//         $encrypted = AES::encryptIV($encoded, GWF_SALT);
         $encrypted = AES::encryptIV($json, GWF_SALT);
         return $encrypted;
     }
@@ -311,7 +303,14 @@ class GDO_Session
         $app = Application::instance();
         if ( (!$app->isCLI()) && (!$app->isUnitTests()) )
         {
-            setcookie(self::$COOKIE_NAME, self::DUMMY_COOKIE_CONTENT, Application::$TIME+300, '/', self::$COOKIE_DOMAIN, self::cookieSecure(), !self::$COOKIE_JS);
+            setcookie(
+                self::$COOKIE_NAME,
+                self::DUMMY_COOKIE_CONTENT,
+                Application::$TIME+300,
+                '/',
+                self::$COOKIE_DOMAIN,
+                self::cookieSecure(),
+                !self::$COOKIE_JS);
         }
     }
     
