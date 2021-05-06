@@ -15,7 +15,7 @@ use GDO\Util\Random;
  * @TODO cleanup session code in other modules
  *
  * @author gizmore
- * @version 6.10.1
+ * @version 6.10.2
  * @since 6.10.0
  */
 class GDO_Session
