@@ -222,7 +222,7 @@ class GDO_Session
     
     public static function reloadCookie($cookieValue)
     {
-        if ($decrypted = AES::decryptIV($cookieValue, GWF_SALT))
+        if ($decrypted = AES::decryptIV($cookieValue, GDO_SALT))
         {
             $sess = new self();
             if ($sess->cookieData = json_decode(rtrim($decrypted, "\x00"), true))
@@ -251,7 +251,7 @@ class GDO_Session
     {
         if ($time = $this->getTime())
         {
-            if ( ($time + GWF_SESS_TIME) < Application::$TIME)
+            if ( ($time + GDO_SESS_TIME) < Application::$TIME)
             {
                 return false;
             }
@@ -289,7 +289,7 @@ class GDO_Session
         }
         $this->cookieData['sess_time'] = Application::$TIME;
         $json = json_encode($this->cookieData);
-        $encrypted = AES::encryptIV($json, GWF_SALT);
+        $encrypted = AES::encryptIV($json, GDO_SALT);
         return $encrypted;
     }
     
