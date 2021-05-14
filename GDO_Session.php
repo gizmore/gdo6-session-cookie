@@ -6,6 +6,7 @@ use GDO\User\GDO_User;
 use GDO\Util\Math;
 use GDO\Util\AES;
 use GDO\Core\Website;
+use GDO\DB\Database;
 use GDO\Net\GDT_IP;
 use GDO\Util\Random;
 
@@ -32,6 +33,20 @@ class GDO_Session
     private static $COOKIE_SECONDS = 72600;
     
     public static function isDB() { return false; }
+    
+    private $lock;
+    public function setLock($lock)
+    {
+        $this->lock = $lock;
+    }
+    
+    public function __destruct()
+    {
+        if ($this->lock)
+        {
+            Database::instance()->unlock($this->lock);
+        }
+    }
     
     public function getID()
     {
