@@ -13,10 +13,9 @@ use GDO\Util\Random;
 /**
  * AES-Cookie driven Session handler.
  * The code is a bit ugly because i mimiced the GDO interface badly.
- * @TODO cleanup session code in other modules
  *
  * @author gizmore
- * @version 6.10.2
+ * @version 6.10.3
  * @since 6.10.0
  */
 class GDO_Session
@@ -64,12 +63,13 @@ class GDO_Session
     {
         if ($uid = $this->getVar('sess_user'))
         {
-            if ($user = GDO_User::table()->find($uid, false))
+            if ($user = GDO_User::table()->findCached($uid))
             {
                 return $user;
             }
             $this->setDummyCookie(); # somethings wrong in db!
         }
+        return GDO_User::ghost();
     }
     public function getIP() { return $this->getVar('sess_ip'); }
     public function getTime() { return $this->getVar('sess_time'); }
@@ -102,19 +102,19 @@ class GDO_Session
     private $cookieData = [];
     private $cookieChanged = false;
     
-    /**
-     * Get current user or ghost.
-     * @return GDO_User
-     */
-    public static function user()
-    {
-        if ( (!($session = self::instance())) ||
-            (!($user = $session->getUser())) )
-        {
-            return GDO_User::ghost();
-        }
-        return $user;
-    }
+//     /**
+//      * Get current user or ghost.
+//      * @return GDO_User
+//      */
+//     public static function user()
+//     {
+//         if ( (!($session = self::instance())) ||
+//             (!($user = $session->getUser())) )
+//         {
+//             return GDO_User::ghost();
+//         }
+//         return $user;
+//     }
     
     /**
      * @return self
@@ -243,6 +243,7 @@ class GDO_Session
             if ($sess->cookieData = json_decode(rtrim($decrypted, "\x00"), true))
             {
                 self::$INSTANCE = $sess;
+                GDO_User::setCurrent($sess->getUser());
                 return $sess;
             }
             else
