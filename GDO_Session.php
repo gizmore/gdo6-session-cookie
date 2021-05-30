@@ -102,20 +102,6 @@ class GDO_Session
     private $cookieData = [];
     private $cookieChanged = false;
     
-//     /**
-//      * Get current user or ghost.
-//      * @return GDO_User
-//      */
-//     public static function user()
-//     {
-//         if ( (!($session = self::instance())) ||
-//             (!($user = $session->getUser())) )
-//         {
-//             return GDO_User::ghost();
-//         }
-//         return $user;
-//     }
-    
     /**
      * @return self
      */
@@ -199,6 +185,11 @@ class GDO_Session
      */
     private static function start($cookieValue=true, $cookieIP=true)
     {
+        if (Application::instance()->isCLI())
+        {
+            return self::createSession();
+        }
+        
         # Parse cookie value
         if ($cookieValue === true)
         {
@@ -332,7 +323,7 @@ class GDO_Session
     
     private static function createSession()
     {
-        $session = new self();
+        $session = self::blank();
         $session->setCookie();
         return $session;
     }
