@@ -234,7 +234,9 @@ class GDO_Session
             if ($sess->cookieData = json_decode(rtrim($decrypted, "\x00"), true))
             {
                 self::$INSTANCE = $sess;
-                GDO_User::setCurrent($sess->getUser());
+                $user = $sess->getUser();
+                GDO_User::setCurrent($user);
+//                 $sess->setVar('sess_id', md5(GDT_IP::$CURRENT.$user->getID()));
                 return $sess;
             }
             else
@@ -288,11 +290,10 @@ class GDO_Session
     
     public function cookieContent()
     {
-        if (!$this->cookieData)
+        if (!isset($this->cookieData['sess_id']))
         {
-            $this->cookieData = [
-                'sess_id' => Application::$MICROTIME . Random::mrand(1, 100),
-            ];
+            $id = Application::$MICROTIME . Random::mrand(1, 100);
+            self::set('sess_id', $id);
         }
         $this->cookieData['sess_time'] = Application::$TIME;
         $json = json_encode($this->cookieData);
