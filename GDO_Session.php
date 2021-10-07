@@ -15,7 +15,7 @@ use GDO\Util\Random;
  * The code is a bit ugly because i mimiced the GDO interface badly.
  *
  * @author gizmore
- * @version 6.10.3
+ * @version 6.10.5
  * @since 6.10.0
  */
 class GDO_Session
@@ -67,7 +67,7 @@ class GDO_Session
             {
                 return $user;
             }
-            $this->setDummyCookie(); # somethings wrong in db!
+            $this->createSession(); # somethings wrong in db!
         }
         return GDO_User::ghost();
     }
@@ -195,8 +195,7 @@ class GDO_Session
         {
             if (!isset($_COOKIE[self::$COOKIE_NAME]))
             {
-                self::setDummyCookie();
-                return false;
+                return self::createSession();
             }
             $cookieValue = (string)$_COOKIE[self::$COOKIE_NAME];
         }
@@ -210,17 +209,15 @@ class GDO_Session
         elseif ($session = self::reloadCookie($cookieValue, $cookieIP))
         {
             if ( (!$session->ipCheck()) ||
-                 (!$session->timeCheck()) )
+                (!$session->timeCheck()) )
             {
-                self::setDummyCookie();
-                return false;
+                return self::createSession();
             }
         }
         # Set special first dummy cookie
         else
         {
-            self::setDummyCookie();
-            return false;
+            return self::createSession();
         }
         
         return $session;
@@ -236,12 +233,11 @@ class GDO_Session
                 self::$INSTANCE = $sess;
                 $user = $sess->getUser();
                 GDO_User::setCurrent($user);
-//                 $sess->setVar('sess_id', md5(GDT_IP::$CURRENT.$user->getID()));
                 return $sess;
             }
             else
             {
-                self::setDummyCookie();
+                self::createSession();
             }
         }
         return false;
@@ -271,8 +267,8 @@ class GDO_Session
     private function setCookie()
     {
         if ( (!Application::instance()->isCLI()) &&
-             (!Application::instance()->isInstall()) &&
-             ($this->cookieChanged) )
+            (!Application::instance()->isInstall()) &&
+            ($this->cookieChanged) )
         {
             if (!setcookie(self::$COOKIE_NAME,
                 $this->cookieContent(),
@@ -306,25 +302,10 @@ class GDO_Session
         return false; # TODO: Evaluate protocoll and OR with setting.
     }
     
-    private static function setDummyCookie()
-    {
-        $app = Application::instance();
-        if ( (!$app->isCLI()) && (!$app->isUnitTests()) )
-        {
-            setcookie(
-                self::$COOKIE_NAME,
-                self::DUMMY_COOKIE_CONTENT,
-                Application::$TIME+300,
-                '/',
-                self::$COOKIE_DOMAIN,
-                self::cookieSecure(),
-                !self::$COOKIE_JS);
-        }
-    }
-    
     private static function createSession()
     {
         $session = self::blank();
+        $session->cookieChanged = true;
         $session->setCookie();
         return $session;
     }
