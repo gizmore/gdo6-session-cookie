@@ -15,7 +15,7 @@ use GDO\Util\Random;
  * The code is a bit ugly because i mimiced the GDO interface badly.
  *
  * @author gizmore
- * @version 6.10.5
+ * @version 6.11.1
  * @since 6.10.0
  */
 class GDO_Session
@@ -25,7 +25,7 @@ class GDO_Session
     public static $INSTANCE;
     public static $STARTED = false;
     
-    private static $COOKIE_NAME = 'GDO6';
+    public static $COOKIE_NAME = 'GDO6';
     private static $COOKIE_DOMAIN = 'localhost';
     private static $COOKIE_JS = true;
     private static $COOKIE_HTTPS = true;
@@ -127,7 +127,11 @@ class GDO_Session
         self::$COOKIE_DOMAIN = $domain ? $domain : $_SERVER['HTTP_HOST'];
         self::$COOKIE_SECONDS = Math::clamp($seconds, -1, 1234567);
         self::$COOKIE_JS = !$httpOnly;
-        self::$COOKIE_HTTPS = $https;
+        self::$COOKIE_HTTPS = $https && Website::isTLS();
+        if (Website::isTLS())
+        {
+        	$cookieName .= '_tls';
+        }
     }
     
     ######################
@@ -209,7 +213,7 @@ class GDO_Session
         elseif ($session = self::reloadCookie($cookieValue, $cookieIP))
         {
             if ( (!$session->ipCheck()) ||
-                (!$session->timeCheck()) )
+                 (!$session->timeCheck()) )
             {
                 return self::createSession();
             }
@@ -299,7 +303,7 @@ class GDO_Session
     
     private static function cookieSecure()
     {
-        return false; # TODO: Evaluate protocoll and OR with setting.
+        return self::$COOKIE_HTTPS;
     }
     
     private static function createSession()
