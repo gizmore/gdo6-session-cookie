@@ -29,6 +29,7 @@ class GDO_Session
     private static $COOKIE_DOMAIN = 'localhost';
     private static $COOKIE_JS = true;
     private static $COOKIE_HTTPS = true;
+    private static $COOKIE_SAMESITE = 'Lax';
     private static $COOKIE_SECONDS = 72600;
     
     public static function isDB() { return false; }
@@ -121,13 +122,14 @@ class GDO_Session
         self::$STARTED = false;
     }
     
-    public static function init($cookieName='GDO6', $domain=null, $seconds=-1, $httpOnly=true, $https=false)
+    public static function init($cookieName='GDO6', $domain=null, $seconds=-1, $httpOnly=true, $https=false, $samesite='Lax')
     {
         self::$COOKIE_NAME = $cookieName;
         self::$COOKIE_DOMAIN = $domain ? $domain : $_SERVER['HTTP_HOST'];
         self::$COOKIE_SECONDS = Math::clamp($seconds, -1, 1234567);
         self::$COOKIE_JS = !$httpOnly;
         self::$COOKIE_HTTPS = $https && Website::isTLS();
+		self::$COOKIE_SAMESITE = $samesite;
         if (Website::isTLS())
         {
         	$cookieName .= '_tls';
@@ -274,17 +276,18 @@ class GDO_Session
             (!Application::instance()->isInstall()) &&
             ($this->cookieChanged) )
         {
-            if (!setcookie(self::$COOKIE_NAME,
-                $this->cookieContent(),
-                Application::$TIME + self::$COOKIE_SECONDS,
-                '/',
-                self::$COOKIE_DOMAIN,
-                self::cookieSecure(),
-                !self::$COOKIE_JS))
-            {
+			if (!setcookie(self::$COOKIE_NAME, $this->cookieContent(), [
+				'expires' => Application::$TIME + self::$COOKIE_SECONDS,
+				'path' => GDO_WEB_ROOT,
+				'domain' => self::$COOKIE_DOMAIN,
+				'samesite' => self::$COOKIE_SAMESITE,
+				'secure' => self::cookieSecure(),
+				'httponly' => !self::$COOKIE_JS,
+			]))
+			{
                 Website::error('err_set_cookie');
                 die('ERR');
-            }
+			}
         }
     }
     
@@ -306,7 +309,7 @@ class GDO_Session
         return self::$COOKIE_HTTPS;
     }
     
-    private static function createSession()
+    private static function createSession($bindIP=null)
     {
         $session = self::blank();
         $session->cookieChanged = true;
@@ -314,4 +317,10 @@ class GDO_Session
         return $session;
     }
     
+}
+
+# @TODO: remove session samesite config fallback when all sites are 6.11.3
+if (!defined('GDO_SESS_SAMESITE'))
+{
+	define('GDO_SESS_SAMESITE', 'Lax');
 }
